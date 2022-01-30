@@ -51,6 +51,7 @@ public class MainActivity extends AppCompatActivity {
     private String username;
     private String password;
     private String last_url = "";
+    private boolean is_registered;
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -89,7 +90,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         //credentials
-        get_creds();
+        is_registered = false;
 
 
 
@@ -110,8 +111,12 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onPageFinished(WebView view,String url){
 
+                if (!is_registered){
+                    is_registered = get_creds();
+                }
 
-                if (url.contains("/login") && !last_url.contains("/home")){
+
+                if (url.contains("/login") && !last_url.contains("/home") && is_registered){
                     //auto login part
 
                     webView.loadUrl("javascript:{" +
@@ -172,7 +177,7 @@ public class MainActivity extends AppCompatActivity {
         AlertDialog.Builder alert = new AlertDialog.Builder(this);
 
         alert.setTitle("Identification");
-        alert.setMessage("Si vous êtes déjà enregistré sur jeparticipe.tk, entrez ici vos identifiants. Sinon, veuillez vous créer un compte depuis la page en cliquant sur Annuler.");
+        alert.setMessage("Si vous êtes déjà enregistré sur jeparticipe.tk, entrez ici vos identifiants. Sinon, veuillez vous créer un compte depuis la page en cliquant sur Annuler (ce message va revenir juste apres).");
 
 // Set an EditText view to get user input
         LinearLayout layout = new LinearLayout(MainActivity.this);
@@ -194,6 +199,7 @@ public class MainActivity extends AppCompatActivity {
                 username = username_input.getText().toString();
                 password = password_input.getText().toString();
                 utils.writeToFile(username+"\n"+password,MainActivity.this,"peepee.j");
+                Toast.makeText(MainActivity.this, "Compte enregistré dans l'application !", Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -209,15 +215,16 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-    public void get_creds(){
+    public boolean get_creds(){
 
         String creds = utils.readFromFile(MainActivity.this,"peepee.j");
         if(creds.contains("\n")){
             username = creds.split("\n")[1];
             password = creds.split("\n")[2];
-
+            return true;
         }else{
             ask_creds();
+            return false;
         }
 
 
