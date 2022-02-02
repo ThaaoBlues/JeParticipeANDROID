@@ -10,14 +10,18 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.ClipData;
 import android.content.ClipboardManager;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.StrictMode;
+import android.provider.MediaStore;
 import android.util.Base64;
 import android.util.Log;
 import android.webkit.DownloadListener;
@@ -33,16 +37,20 @@ import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
 import androidx.navigation.ui.AppBarConfiguration;
 
 import com.thaaoblues.jeparticipe.databinding.ActivityMainBinding;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.reflect.Method;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -58,20 +66,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        //permissions stuff
-        ActivityResultLauncher<String> requestPermissionLauncher =
-                registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
-                    if (isGranted) {
-                        // Permission is granted. Continue the action or workflow in your
-                        // app.
-                    } else {
-                        // Explain to the user that the feature is unavailable because the
-                        // features requires a permission that the user has denied. At the
-                        // same time, respect the user's decision. Don't link to system
-                        // settings in an effort to convince the user to change their
-                        // decision.
-                    }
-                });
+
 
 
 
@@ -146,21 +141,51 @@ public class MainActivity extends AppCompatActivity {
                                         String contentDisposition, String mimetype,
                                         long contentLength) {
 
-
-                if (url.startsWith("data:")) {  //when url is base64 encoded data
-                    String path = utils.createAndSaveFileFromBase64Url(url);
+                String path = url;
+                String filename = "";
+                boolean fromb64 = false;
+                if(ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                        != PackageManager.PERMISSION_GRANTED)
+                {
+                    ActivityCompat.requestPermissions(MainActivity.this, new String[] { Manifest.permission.WRITE_EXTERNAL_STORAGE }, 1);
                     return;
                 }
 
-                DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
+                if (url.startsWith("data:")) {  //when url is base64 encoded data
 
-                request.allowScanningByMediaScanner();
-                request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED); //Notify client once download is completed!
-                request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, URLUtil.guessFileName(url, contentDisposition, mimetype));
-                DownloadManager dm = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
-                dm.enqueue(request);
-                Toast.makeText(getApplicationContext(), "Téléchargement de votre fichier...", //To notify the Client that the file is being downloaded
-                        Toast.LENGTH_LONG).show();
+
+                    String[] ret = utils.createAndSaveFileFromBase64Url(url);
+                    path = ret[0];
+                    filename = ret[1];
+                    fromb64 = true;
+                    File file = new File(path);
+
+                    Toast.makeText(MainActivity.this, "Graph enregistré dans votre gallerie ;)", Toast.LENGTH_SHORT).show();
+
+
+                }else{
+                    path = url;
+                    filename = URLUtil.guessFileName(path, contentDisposition, mimetype);
+
+                    DownloadManager.Request request = new DownloadManager.Request(Uri.parse(path));
+
+                    request.allowScanningByMediaScanner();
+                    request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED); //Notify client once download is completed!
+                    request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, filename);
+                    DownloadManager dm = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
+                    dm.enqueue(request);
+                    Toast.makeText(getApplicationContext(), "Téléchargement de votre fichier...", //To notify the Client that the file is being downloaded
+                            Toast.LENGTH_LONG).show();
+
+                    //Set notification after download complete and add "click to view" action to that
+                    Intent intent = new Intent();
+                    intent.setAction(android.content.Intent.ACTION_VIEW);
+                    intent.setDataAndType(Uri.fromFile(new File(new File(Environment.DIRECTORY_DOWNLOADS), filename)), (mimetype + "/*"));
+                    PendingIntent pIntent = PendingIntent.getActivity(MainActivity.this, 0, intent, 0);
+
+                }
+
+
 
             }
         });

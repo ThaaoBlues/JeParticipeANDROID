@@ -1,6 +1,7 @@
 package com.thaaoblues.jeparticipe;
 
 import android.app.PendingIntent;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -13,6 +14,7 @@ import android.util.Log;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -72,23 +74,23 @@ public class Utils {
 
     }
 
-    public String createAndSaveFileFromBase64Url(String url) {
+    public String[] createAndSaveFileFromBase64Url(String url){
 
-        File path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
         String filetype = url.substring(url.indexOf("/") + 1, url.indexOf(";"));
         String filename = System.currentTimeMillis() + "." + filetype;
-        File file = new File(path, filename);
+        //File file = new File(filename);
+        File file = new File(new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).toString()),filename);
         try {
-            if(!path.exists())
-                path.mkdirs();
-            if(!file.exists())
-                file.createNewFile();
 
             String base64EncodedString = url.substring(url.indexOf(",") + 1);
             byte[] decodedBytes = Base64.decode(base64EncodedString, Base64.DEFAULT);
-            OutputStream os = new FileOutputStream(file);
+
+            file.createNewFile();
+            ContentResolver cr = activity.getContentResolver();
+            OutputStream os = cr.openOutputStream(Uri.fromFile(file));
             os.write(decodedBytes);
             os.close();
+            
 
             //Tell the media scanner about the new file so that it is immediately available to the user.
             MediaScannerConnection.scanFile(activity,
@@ -100,18 +102,14 @@ public class Utils {
                         }
                     });
 
-            //Set notification after download complete and add "click to view" action to that
-            String mimetype = url.substring(url.indexOf(":") + 1, url.indexOf("/"));
-            Intent intent = new Intent();
-            intent.setAction(android.content.Intent.ACTION_VIEW);
-            intent.setDataAndType(Uri.fromFile(file), (mimetype + "/*"));
-            PendingIntent pIntent = PendingIntent.getActivity(activity, 0, intent, 0);
+
 
         } catch (IOException e) {
-            Log.w("ExternalStorage", "Error writing " + file, e);
+            Log.w("ExternalStorage", "Error writing ", e);
         }
 
-        return file.toString();
+        String[] ret = {file.toString(),filename};
+        return ret;
     }
 
     public String readFromFile(Context context, String FileName) {
