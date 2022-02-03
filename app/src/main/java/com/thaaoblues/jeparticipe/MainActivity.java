@@ -24,6 +24,7 @@ import android.os.StrictMode;
 import android.provider.MediaStore;
 import android.util.Base64;
 import android.util.Log;
+import android.webkit.CookieManager;
 import android.webkit.DownloadListener;
 import android.webkit.JavascriptInterface;
 import android.webkit.URLUtil;
@@ -31,6 +32,7 @@ import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
@@ -124,8 +126,11 @@ public class MainActivity extends AppCompatActivity {
                     File dir = getFilesDir();
                     File file = new File(dir, "peepee.j");
                     boolean deleted = file.delete();
+                    CookieManager.getInstance().removeAllCookies(null);
+                    CookieManager.getInstance().flush();
                     Toast.makeText(MainActivity.this, "Vous avez été déconnecté. Suppression du compte enregistré...", Toast.LENGTH_SHORT).show();
                 }
+
 
                 last_url = url;
 
@@ -223,14 +228,21 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(DialogInterface dialog, int whichButton) {
                 username = username_input.getText().toString();
                 password = password_input.getText().toString();
-                utils.writeToFile(username+"\n"+password,MainActivity.this,"peepee.j");
-                Toast.makeText(MainActivity.this, "Compte enregistré dans l'application !", Toast.LENGTH_SHORT).show();
+                if(!username.equals("") && !password.equals("")){
+                    utils.writeToFile(username+"\n"+password,MainActivity.this,"peepee.j");
+                    Toast.makeText(MainActivity.this, "Compte enregistré dans l'application !", Toast.LENGTH_SHORT).show();
+
+                }else{
+                    Toast.makeText(MainActivity.this, "Veuillez renmplir la totalité des champs.", Toast.LENGTH_SHORT).show();
+                    dialog.cancel();
+                    ask_creds();
+                }
             }
         });
 
         alert.setNegativeButton("Annuler", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int whichButton) {
-                Toast.makeText(MainActivity.this, "Enregistrement du compte annulé.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this, "Enregistrement du compte dans l'app annulé.", Toast.LENGTH_SHORT).show();
             }
         });
 
