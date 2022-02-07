@@ -5,54 +5,34 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.DownloadManager;
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.ClipData;
 import android.content.ClipboardManager;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.media.MediaScannerConnection;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.StrictMode;
-import android.provider.MediaStore;
-import android.util.Base64;
 import android.util.Log;
 import android.webkit.CookieManager;
 import android.webkit.DownloadListener;
 import android.webkit.JavascriptInterface;
 import android.webkit.URLUtil;
 import android.webkit.WebChromeClient;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
-import androidx.core.content.FileProvider;
-import androidx.navigation.ui.AppBarConfiguration;
-
-import com.thaaoblues.jeparticipe.databinding.ActivityMainBinding;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.lang.reflect.Method;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -62,6 +42,7 @@ public class MainActivity extends AppCompatActivity {
     private String password;
     private String last_url = "";
     private boolean is_registered;
+    private WebView webView;
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -74,7 +55,7 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-    //deep links
+        //deep links
         Intent intent = getIntent();
         String action = intent.getAction();
         Uri data = intent.getData();
@@ -92,23 +73,26 @@ public class MainActivity extends AppCompatActivity {
 
 
         //webview part
-        WebView webView = new WebView(MainActivity.this);
+
+        webView = new WebView(MainActivity.this);
+
         webView.setWebChromeClient(new WebChromeClient());
-        webView.getSettings().setJavaScriptEnabled(true);
-        webView.getSettings().setDomStorageEnabled(true);
         webView.addJavascriptInterface(new WebAppInterface(MainActivity.this), "Android");
         webView.getSettings().setUserAgentString("JeParticipe-app");
-
+        webView.getSettings().setJavaScriptEnabled(true);
+        webView.getSettings().setDomStorageEnabled(true);
 
         webView.loadUrl(page);
         setContentView(webView);
+
+
 
 
         webView.setWebViewClient(new WebViewClient(){
             @Override
             public void onPageFinished(WebView view,String url){
 
-                if (!is_registered){
+                if ((!is_registered) && (!url.contains("/a-propos")) && (url.contains("jeparticipe.tk"))){
                     is_registered = get_creds();
                 }
 
@@ -181,12 +165,6 @@ public class MainActivity extends AppCompatActivity {
                     dm.enqueue(request);
                     Toast.makeText(getApplicationContext(), "Téléchargement de votre fichier...", //To notify the Client that the file is being downloaded
                             Toast.LENGTH_LONG).show();
-
-                    //Set notification after download complete and add "click to view" action to that
-                    Intent intent = new Intent();
-                    intent.setAction(android.content.Intent.ACTION_VIEW);
-                    intent.setDataAndType(Uri.fromFile(new File(new File(Environment.DIRECTORY_DOWNLOADS), filename)), (mimetype + "/*"));
-                    PendingIntent pIntent = PendingIntent.getActivity(MainActivity.this, 0, intent, 0);
 
                 }
 
@@ -279,12 +257,8 @@ public class MainActivity extends AppCompatActivity {
             mContext = c;
         }
 
-        /**
-         * Show a toast from the web page
-         */
         @JavascriptInterface
         public void share_post(String url) {
-            //TODO : truc de partage avec envoyer vers et copier le lien
             ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
             ClipData clip_data = ClipData.newPlainText("JeParticipe",url);
             clipboard.setPrimaryClip(clip_data);
