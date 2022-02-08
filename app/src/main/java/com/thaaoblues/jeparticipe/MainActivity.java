@@ -33,6 +33,8 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -40,6 +42,7 @@ public class MainActivity extends AppCompatActivity {
     private Utils utils = new Utils(MainActivity.this);
     private String username;
     private String password;
+    private List<String> pile_urls = new ArrayList<String>();
     private String last_url = "";
     private boolean is_registered;
     private WebView webView;
@@ -83,8 +86,7 @@ public class MainActivity extends AppCompatActivity {
         webView.getSettings().setDomStorageEnabled(true);
 
         webView.loadUrl(page);
-        setContentView(webView);
-
+        pile_urls.add(page);
 
 
 
@@ -115,9 +117,23 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(MainActivity.this, "Vous avez été déconnecté. Suppression du compte enregistré...", Toast.LENGTH_SHORT).show();
                 }
 
+                // set last_url to the top of the pile
+                last_url = pile_urls.get(pile_urls.size()-1);
 
-                last_url = url;
+                // check if this isn't just a reload before adding url to pile
+                if (!last_url.equals(url)){
+                    pile_urls.add(url);
+                }
 
+            }
+
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView mView, String url){
+
+                if(url.contains("jeparticipe.tk") | url.contains("www.privacypolicygenerator.info")){
+                    return false;
+                }
+                return true;
             }
 
         });
@@ -173,8 +189,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-
-
+        //affiche la webview
+        setContentView(webView);
 
 
     }
@@ -211,7 +227,7 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(MainActivity.this, "Compte enregistré dans l'application !", Toast.LENGTH_SHORT).show();
 
                 }else{
-                    Toast.makeText(MainActivity.this, "Veuillez renmplir la totalité des champs.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MainActivity.this, "Veuillez remplir la totalité des champs.", Toast.LENGTH_SHORT).show();
                     dialog.cancel();
                     ask_creds();
                 }
@@ -266,6 +282,20 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    @Override
+    public void onBackPressed() {
 
+        // charge la dernière page visitée
+        webView.loadUrl(last_url);
+        if(pile_urls.size() > 1){
+            // dépile d'une url
+            pile_urls.remove(pile_urls.size()-1);
+        }else{
+            // la pile ne contient qu'une page, il est donc probable que
+            // l'utilisateur veuille fermer l'application.
+            finish();
+            System.exit(0);
+        }
+    }
 
 }
