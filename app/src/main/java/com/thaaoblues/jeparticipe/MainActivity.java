@@ -15,6 +15,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
+import android.view.View;
 import android.webkit.CookieManager;
 import android.webkit.DownloadListener;
 import android.webkit.JavascriptInterface;
@@ -24,6 +25,7 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Toast;
@@ -46,6 +48,7 @@ public class MainActivity extends AppCompatActivity {
     private String last_url = "";
     private boolean is_registered;
     private WebView webView;
+    private boolean logout = false;
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -70,8 +73,6 @@ public class MainActivity extends AppCompatActivity {
             page = "https://jeparticipe.tk";
         }
 
-        //credentials
-        is_registered = false;
 
 
 
@@ -89,10 +90,16 @@ public class MainActivity extends AppCompatActivity {
         pile_urls.add(page);
 
 
+        //credentials
+        is_registered = false;
+
+
+
 
         webView.setWebViewClient(new WebViewClient(){
             @Override
             public void onPageFinished(WebView view,String url){
+
 
                 if ((!is_registered) && (!url.contains("/a-propos")) && (url.contains("jeparticipe.tk"))){
                     is_registered = get_creds();
@@ -108,14 +115,7 @@ public class MainActivity extends AppCompatActivity {
                             "document.forms.login.submit.click();}");
                 }
 
-                if (url.contains("/login") && last_url.contains("/home")){
-                    File dir = getFilesDir();
-                    File file = new File(dir, "peepee.j");
-                    boolean deleted = file.delete();
-                    CookieManager.getInstance().removeAllCookies(null);
-                    CookieManager.getInstance().flush();
-                    Toast.makeText(MainActivity.this, "Vous avez été déconnecté. Suppression du compte enregistré...", Toast.LENGTH_SHORT).show();
-                }
+
 
                 // set last_url to the top of the pile
                 last_url = pile_urls.get(pile_urls.size()-1);
@@ -130,9 +130,30 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public boolean shouldOverrideUrlLoading(WebView mView, String url){
 
+                //intercept logout request before redirect
+                if (url.contains("/logout")){
+                    File dir = getFilesDir();
+                    File file = new File(dir, "peepee.j");
+                    boolean deleted = file.delete();
+                    CookieManager.getInstance().removeAllCookies(null);
+                    CookieManager.getInstance().flush();
+
+                    Toast.makeText(MainActivity.this, "Vous avez été déconnecté. Suppression du compte enregistré...", Toast.LENGTH_SHORT).show();
+
+                    webView.loadUrl("https://jeparticipe.tk/login");
+
+                    logout = true;
+
+                    return false;
+                }
+
+                //verify that url is still on correct domain
                 if(url.contains("jeparticipe.tk") | url.contains("www.privacypolicygenerator.info")){
                     return false;
                 }
+
+
+
                 return true;
             }
 
@@ -198,49 +219,62 @@ public class MainActivity extends AppCompatActivity {
 
 
     public void ask_creds(){
-        AlertDialog.Builder alert = new AlertDialog.Builder(this);
 
-        alert.setTitle("Identification");
-        alert.setMessage("Si vous êtes déjà enregistré sur jeparticipe.tk, entrez ici vos identifiants. Sinon, veuillez vous créer un compte depuis la page en cliquant sur Annuler (ce message va revenir juste apres).");
+        AlertDialog.Builder alert = new AlertDialog.Builder(this,android.R.style.Theme_Material_Light_NoActionBar_Fullscreen);
 
-// Set an EditText view to get user input
-        LinearLayout layout = new LinearLayout(MainActivity.this);
-        layout.setOrientation(LinearLayout.VERTICAL);
+        // set the custom layout
+        final View customLayout
+                = getLayoutInflater()
+                .inflate(
+                        R.layout.alert_register,
+                        null);
+
+        final EditText username_input = customLayout.findViewById(R.id.edit_username);
+
+        final EditText password_input = customLayout.findViewById(R.id.edit_password);
+
+        final Button register_button = customLayout.findViewById(R.id.register_button);
+        final Button cancel_button = customLayout.findViewById(R.id.cancel_button);
 
 
-        final EditText username_input = new EditText(this);
-        username_input.setHint("Pseudonyme");
-        layout.addView(username_input);
+        alert.setView(customLayout);
+        alert.setCancelable(false);
+        AlertDialog dialog = alert.create();
 
-        final EditText password_input = new EditText(this);
-        password_input.setHint("Mot de passe");
-        layout.addView(password_input);
 
-        alert.setView(layout);
-
-        alert.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int whichButton) {
+        register_button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
                 username = username_input.getText().toString();
                 password = password_input.getText().toString();
                 if(!username.equals("") && !password.equals("")){
                     utils.writeToFile(username+"\n"+password,MainActivity.this,"peepee.j");
+                    dialog.dismiss();
+
+                    webView.loadUrl("https://jeparticipe.tk");
                     Toast.makeText(MainActivity.this, "Compte enregistré dans l'application !", Toast.LENGTH_SHORT).show();
 
                 }else{
+
                     Toast.makeText(MainActivity.this, "Veuillez remplir la totalité des champs.", Toast.LENGTH_SHORT).show();
-                    dialog.cancel();
-                    ask_creds();
                 }
             }
         });
 
-        alert.setNegativeButton("Annuler", new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int whichButton) {
+        cancel_button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dialog.dismiss();
                 Toast.makeText(MainActivity.this, "Enregistrement du compte dans l'app annulé.", Toast.LENGTH_SHORT).show();
             }
         });
 
-        alert.show();
+
+
+
+
+
+        dialog.show();
     }
 
 
