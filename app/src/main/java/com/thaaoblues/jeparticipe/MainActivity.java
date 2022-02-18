@@ -148,9 +148,15 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 //verify that url is still on correct domain
-                if(url.contains("jeparticipe.tk") | url.contains("www.privacypolicygenerator.info")){
-                    return false;
+                String[] allowed_urls = {"jeparticipe.tk","www.privacypolicygenerator.info","twitter.com","facebook.com","reddit.com"};
+
+                for(int i = 0;i<allowed_urls.length;i++){
+                    if(url.contains(allowed_urls[i])){
+                        return false;
+                    }
+
                 }
+
 
 
 
