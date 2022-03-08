@@ -61,23 +61,33 @@
         android:id="@+id/register_button"
         android:layout_width="140dp"
         android:layout_height="62dp"
-        android:layout_marginTop="60dp"
+        android:layout_marginTop="28dp"
         android:background="@drawable/rounded_button"
-        android:text="Enregistrer"
+        android:text="Se connecter"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.059"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/edit_password" />
+        app:layout_constraintTop_toBottomOf="@+id/connect_discord_button" />
 
     <Button
         android:id="@+id/cancel_button"
-        android:layout_width="140dp"
-        android:layout_height="60dp"
-        android:layout_marginTop="60dp"
+        android:layout_width="155dp"
+        android:layout_height="62dp"
+        android:layout_marginTop="28dp"
         android:background="@drawable/rounded_button"
-        android:text="Annuler"
+        android:text="Page d'inscription"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.892"
+        app:layout_constraintHorizontal_bias="0.886"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/connect_discord_button" />
+
+    <Button
+        android:id="@+id/connect_discord_button"
+        android:layout_width="155dp"
+        android:layout_height="46dp"
+        android:layout_marginStart="116dp"
+        android:layout_marginTop="24dp"
+        android:text="Via Discord"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/edit_password" />
 </androidx.constraintlayout.widget.ConstraintLayout>

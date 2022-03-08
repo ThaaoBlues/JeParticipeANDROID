@@ -21,6 +21,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.time.LocalDate;
 import java.util.Calendar;
 
 public class Utils {
@@ -150,6 +151,11 @@ public class Utils {
         } catch (IOException e) {
             Log.e("Exception", "File write failed: " + e.toString());
         }
+    }
+
+    public boolean is_from_oauth(){
+        Log.d("OAUTH",readFromFile(activity,"oauth"));
+        return readFromFile(activity,"oauth").contains("1");
     }
 
 

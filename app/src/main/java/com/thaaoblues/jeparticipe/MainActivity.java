@@ -101,18 +101,29 @@ public class MainActivity extends AppCompatActivity {
             public void onPageFinished(WebView view,String url){
 
 
-                if ((!is_registered) && (!url.contains("/a-propos")) && (url.contains("jeparticipe.tk"))){
-                    is_registered = get_creds();
+                if ((!is_registered) && (!url.contains("https://jeparticipe.tk/a-propos")) && (url.contains("jeparticipe.tk"))){
+                    if(utils.is_from_oauth()){
+                        is_registered = true;
+                    }else{
+                        is_registered = get_creds();
+
+                    }
                 }
 
 
-                if (url.contains("/login") && !last_url.contains("/home") && is_registered){
+                if (url.contains("https://jeparticipe.tk/login") && !last_url.contains("https://jeparticipe.tk/home") && is_registered){
                     //auto login part
 
-                    webView.loadUrl("javascript:{" +
-                            "document.getElementsByName('username')[0].value = '"+username+"';" +
-                            "document.getElementsByName('password')[0].value = '"+password+"';" +
-                            "document.forms.login.submit.click();}");
+                    if(utils.is_from_oauth()){
+                        webView.loadUrl("https://jeparticipe.tk/discord_login");
+
+                    }else{
+                        webView.loadUrl("javascript:{" +
+                                "document.getElementsByName('username')[0].value = '"+username+"';" +
+                                "document.getElementsByName('password')[0].value = '"+password+"';" +
+                                "document.forms.login.submit.click();}");
+                    }
+
                 }
 
 
@@ -131,24 +142,36 @@ public class MainActivity extends AppCompatActivity {
             public boolean shouldOverrideUrlLoading(WebView mView, String url){
 
                 //intercept logout request before redirect
-                if (url.contains("/logout")){
+                if (url.contains("https://jeparticipe.tk/logout")){
                     File dir = getFilesDir();
+
+                    //delete password file
                     File file = new File(dir, "peepee.j");
-                    boolean deleted = file.delete();
+                    file.delete();
+
+                    //delete oauth file
+                    file = new File(dir, "oauth");
+                    file.delete();
+
+                    //disable auto oauth
+                    utils.writeToFile("0",MainActivity.this,"oauth");
+
+
+
                     CookieManager.getInstance().removeAllCookies(null);
                     CookieManager.getInstance().flush();
 
                     Toast.makeText(MainActivity.this, "Vous avez été déconnecté. Suppression du compte enregistré...", Toast.LENGTH_SHORT).show();
 
-                    webView.loadUrl("https://jeparticipe.tk/login");
+                    webView.loadUrl("https://jeparticipe.tk/a-propos");
 
-                    logout = true;
+                    is_registered = false;
 
                     return false;
                 }
 
                 //verify that url is still on correct domain
-                String[] allowed_urls = {"jeparticipe.tk","www.privacypolicygenerator.info","twitter.com","facebook.com","reddit.com"};
+                String[] allowed_urls = {"jeparticipe.tk","instagram.com",".gouv.fr","twitter.com","facebook.com","reddit.com","discord.com"};
 
                 for(int i = 0;i<allowed_urls.length;i++){
                     if(url.contains(allowed_urls[i])){
@@ -242,6 +265,8 @@ public class MainActivity extends AppCompatActivity {
         final Button register_button = customLayout.findViewById(R.id.register_button);
         final Button cancel_button = customLayout.findViewById(R.id.cancel_button);
 
+        final Button discord_button = customLayout.findViewById(R.id.connect_discord_button);
+
 
         alert.setView(customLayout);
         alert.setCancelable(false);
@@ -255,6 +280,7 @@ public class MainActivity extends AppCompatActivity {
                 password = password_input.getText().toString();
                 if(!username.equals("") && !password.equals("")){
                     utils.writeToFile(username+"\n"+password,MainActivity.this,"peepee.j");
+                    utils.writeToFile("0",MainActivity.this,"oauth");
                     dialog.dismiss();
 
                     webView.loadUrl("https://jeparticipe.tk");
@@ -275,11 +301,16 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        discord_button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                webView.loadUrl("https://jeparticipe.tk/discord_login");
 
+                utils.writeToFile("1",MainActivity.this,"oauth");
+                dialog.dismiss();
 
-
-
-
+            }
+        });
         dialog.show();
     }
 

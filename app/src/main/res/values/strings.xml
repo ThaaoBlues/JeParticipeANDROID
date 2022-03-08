@@ -9,7 +9,7 @@
 
     <string name="hello_first_fragment">Hello first fragment</string>
     <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
-    <string name="register_message">Bienvenue sur la plateforme JeParticipe !\nSi vous êtes déjà enregistré sur jeparticipe.tk, entrez ici vos identifiants. Sinon, veuillez vous créer un compte depuis la page en cliquant sur "Annuler" (ce message va revenir juste après).</string>
+    <string name="register_message">Bienvenue sur la plateforme JeParticipe !\nSi vous êtes déjà enregistré sur jeparticipe.tk, entrez ici vos identifiants. Sinon, veuillez vous créer un compte depuis la page en cliquant sur \"Page d\'inscription\" (ce message va revenir juste après).</string>
     <string name="register_username_hint">Nom d\'utilisateur</string>
     <string name="register_password_hint">Mot de passe</string>
 
